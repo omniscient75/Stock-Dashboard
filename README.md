@@ -2,6 +2,9 @@
 
 A modern, real-time stock market dashboard built with Next.js 14, TypeScript, and Tailwind CSS.
 
+
+
+
 ## 🚀 Features
 
 - **Real-time Stock Data**: Track your favorite stocks with live price updates
@@ -11,6 +14,10 @@ A modern, real-time stock market dashboard built with Next.js 14, TypeScript, an
 - **Dark Mode**: Automatic dark/light theme switching
 - **Professional UI**: Clean, financial-themed design
 - **Database Ready**: PostgreSQL with Prisma ORM integration
+
+
+https://github.com/user-attachments/assets/e26fa7c9-a57b-47aa-9257-61337d60cf2b
+
 
 ## 🛠️ Tech Stack
 
