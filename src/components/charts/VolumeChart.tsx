@@ -1,18 +1,20 @@
 'use client';
 
-import React, { useMemo, useRef, useEffect } from 'react';
-import {
-  Chart as ChartJS,
+import * as React from 'react';
+import { useMemo, useRef, useEffect } from 'react';
+import { Bar, Line } from 'react-chartjs-2';
+import { 
+  Chart as ChartJS, 
+  ChartOptions,
+  ChartDataset,
   CategoryScale,
   LinearScale,
   BarElement,
   Title,
   Tooltip,
   Legend,
-  ChartOptions,
-  ChartData,
+  registerables 
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
 import { format } from 'date-fns';
 import { HistoricalData } from '@/types/stock';
 
@@ -23,7 +25,8 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ...registerables
 );
 
 interface VolumeChartProps {
@@ -56,7 +59,29 @@ export const VolumeChart: React.FC<VolumeChartProps> = ({
   const chartRef = useRef<ChartJS>(null);
 
   // Memoize chart data to prevent unnecessary re-renders
-  const chartData: ChartData<'bar'> = useMemo(() => {
+    // Define the shape of our volume data points
+  type VolumeDataPoint = {
+    x: string;
+    y: number;
+    open: number;
+    close: number;
+    change: number;
+    changePercent: number;
+    date: string;
+  };
+
+  // Define the shape of our price data points (for the line overlay)
+  type PriceDataPoint = {
+    x: string;
+    y: number;
+    price: number;
+    date: string;
+  };
+
+  // Union type for all possible data points
+  type ChartDataPoint = VolumeDataPoint | PriceDataPoint;
+
+  const chartData = useMemo(() => {
     if (!data || data.length === 0) {
       return {
         labels: [],
@@ -88,28 +113,31 @@ export const VolumeChart: React.FC<VolumeChartProps> = ({
     });
 
     // Create volume dataset
-    const datasets = [
+    const datasets: ChartDataset<'bar' | 'line', ChartDataPoint[]>[] = [
       {
         label: 'Volume',
-        data: volumeData.map(item => ({
-          x: format(new Date(item.date), 'MMM dd'),
-          y: item.volume,
-          open: item.open,
-          close: item.close,
-          change: item.change,
-          changePercent: item.changePercent,
-          date: item.date,
-        })),
+        data: volumeData.map(item => {
+          const date = new Date(item.date);
+          return {
+            x: format(date, 'MMM dd'),
+            y: item.volume,
+            open: item.open,
+            close: item.close,
+            change: item.close - item.open,
+            changePercent: ((item.close - item.open) / item.open) * 100,
+            date: date.toISOString(),
+          };
+        }) as VolumeDataPoint[],
         backgroundColor: volumeData.map(item => 
           item.isGreen 
             ? 'rgba(34, 197, 94, 0.6)' 
             : 'rgba(239, 68, 68, 0.6)'
-        ),
+        ) as unknown as string[],
         borderColor: volumeData.map(item => 
           item.isGreen 
             ? 'rgba(34, 197, 94, 0.8)' 
             : 'rgba(239, 68, 68, 0.8)'
-        ),
+        ) as unknown as string[],
         borderWidth: 1,
         borderRadius: 2,
         borderSkipped: false,
@@ -123,29 +151,30 @@ export const VolumeChart: React.FC<VolumeChartProps> = ({
       
       datasets.push({
         label: 'Close Price',
-        data: volumeData.map(item => ({
-          x: format(new Date(item.date), 'MMM dd'),
-          y: (item.close / maxPrice) * maxVolume * 0.8, // Scale price to volume chart
-          price: item.close,
-          date: item.date,
-        })),
+        data: volumeData.map(item => {
+          const date = new Date(item.date);
+          return {
+            x: format(date, 'MMM dd'),
+            y: (item.close / maxPrice) * maxVolume * 0.8, // Scale price to volume chart
+            price: item.close,
+            date: date.toISOString(),
+          };
+        }) as PriceDataPoint[],
         backgroundColor: 'rgba(59, 130, 246, 0.3)',
         borderColor: 'rgba(59, 130, 246, 0.8)',
         borderWidth: 2,
-        borderRadius: 0,
-        borderSkipped: false,
-        type: 'line' as any, // Override type for line overlay
+        type: 'line' as const, // Override type for line overlay
       });
     }
 
     return {
-      labels: volumeData.map(item => format(new Date(item.date), 'MMM dd')),
+      labels: volumeData.map(item => format(new Date(item.date), 'MMM dd, yyyy')),
       datasets,
     };
   }, [data, showPriceOverlay]);
 
   // Chart configuration options
-  const options: ChartOptions<'bar'> = useMemo(() => ({
+  const options = useMemo<ChartOptions<'bar' | 'line'>>(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -185,20 +214,23 @@ export const VolumeChart: React.FC<VolumeChartProps> = ({
         cornerRadius: 8,
         displayColors: true,
         callbacks: {
-          title: (context) => {
-            const dataIndex = context[0].dataIndex;
+          title: (items: any) => {
+            if (!items || !items.length) return '';
+            const item = items[0];
+            const dataIndex = item.dataIndex;
             const date = data[dataIndex]?.date;
             return date ? format(new Date(date), 'MMM dd, yyyy') : '';
           },
-          label: (context) => {
+          label: (context: any) => {
+            const item = context.parsed || {};
+            const dataIndex = context.dataIndex;
             const datasetIndex = context.datasetIndex;
-            const dataPoint = context.parsed;
             
             if (datasetIndex === 0) {
               // Volume data
-              const volume = Number(data[context.dataIndex].volume);
-              const open = Number(data[context.dataIndex].open);
-              const close = Number(data[context.dataIndex].close);
+              const volume = Number(data[dataIndex]?.volume);
+              const open = Number(data[dataIndex]?.open);
+              const close = Number(data[dataIndex]?.close);
               const change = close - open;
               const changePercent = ((change / open) * 100);
               
@@ -206,14 +238,14 @@ export const VolumeChart: React.FC<VolumeChartProps> = ({
                 `Volume: ${volume.toLocaleString()}`,
                 `Open: ₹${open.toFixed(2)}`,
                 `Close: ₹${close.toFixed(2)}`,
-                `Change: ${change >= 0 ? '+' : ''}${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)`,
+                `Change: ${change >= 0 ? '+' : ''}${change.toFixed(2)} (${changePercent.toFixed(2)}%)`
               ];
             } else if (datasetIndex === 1 && showPriceOverlay) {
               // Price overlay data
-              const price = Number(data[context.dataIndex].close);
-              return `Price: ₹${price.toFixed(2)}`;
+              const price = item.y;
+              return price ? [`Price: ₹${price.toFixed(2)}`] : [];
             }
-            return '';
+            return [];
           },
         },
       },
@@ -248,7 +280,7 @@ export const VolumeChart: React.FC<VolumeChartProps> = ({
             family: 'Inter, sans-serif',
           },
           color: '#6b7280',
-          callback: (value) => {
+          callback: (value: string | number) => {
             const numValue = Number(value);
             if (numValue >= 1000000) {
               return `${(numValue / 1000000).toFixed(1)}M`;
@@ -274,9 +306,10 @@ export const VolumeChart: React.FC<VolumeChartProps> = ({
 
   // Cleanup chart instance on unmount
   useEffect(() => {
+    const chart = chartRef.current;
     return () => {
-      if (chartRef.current) {
-        chartRef.current.destroy();
+      if (chart) {
+        chart.destroy();
       }
     };
   }, []);
@@ -327,15 +360,22 @@ export const VolumeChart: React.FC<VolumeChartProps> = ({
   }
 
   return (
-    <div 
-      className="bg-white rounded-lg border border-gray-200 p-4"
-      style={{ height }}
-    >
-      <Bar 
-        ref={chartRef}
-        data={chartData} 
-        options={options}
-      />
+    <div className="relative w-full" style={{ height }}>
+      {showPriceOverlay ? (
+        <Line
+          ref={chartRef as any}
+          data={chartData as any}
+          options={options as any}
+        />
+      ) : (
+        <Bar
+          ref={chartRef as any}
+          data={chartData as any}
+          options={options as any}
+        />
+      )}
     </div>
   );
 };
+
+export default VolumeChart;

@@ -155,14 +155,15 @@ export function delay(ms: number): Promise<void> {
  * @param wait - Wait time in milliseconds
  * @returns Debounced function
  */
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
+export function debounce<F extends (...args: Parameters<F>) => ReturnType<F>>(
+  func: F,
   wait: number
-): (...args: Parameters<T>) => void {
+): (...args: Parameters<F>) => void {
   let timeout: NodeJS.Timeout;
   
-  return (...args: Parameters<T>) => {
+  return function(this: ThisParameterType<F>, ...args: Parameters<F>): void {
+    const context = this;
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => func.apply(context, args), wait);
   };
 }

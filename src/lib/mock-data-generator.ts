@@ -3,13 +3,12 @@
 
 import { 
   OHLCVData, 
-  IndianCompany, 
-  MarketScenario, 
   ValidationRules, 
-  MockDataOptions 
+  MockDataOptions,
+  IndianCompany
 } from '@/types/stock';
-import { INDIAN_COMPANIES, getCompanyBySymbol } from './indian-companies';
 import { getScenario, createCustomScenario } from './market-scenarios';
+import { INDIAN_COMPANIES, getCompanyBySymbol } from './indian-companies';
 
 // Default validation rules for Indian markets
 const DEFAULT_VALIDATION_RULES: ValidationRules = {
@@ -225,7 +224,7 @@ export class MockDataGenerator {
 
     const data: OHLCVData[] = [];
     let currentPrice = company.basePrice;
-    let currentDate = new Date(startDate);
+    const currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
       // Skip weekends if not included
@@ -297,7 +296,7 @@ export class MockDataGenerator {
    * @returns Object with company symbol as key and OHLCV data as value
    */
   generateAllCompaniesData(options: MockDataOptions): Record<string, OHLCVData[]> {
-    const symbols = INDIAN_COMPANIES.map(company => company.symbol);
+    const symbols = INDIAN_COMPANIES.map((company: IndianCompany) => company.symbol);
     return this.generateMultiCompanyData(symbols, options);
   }
 
@@ -345,13 +344,30 @@ export class MockDataGenerator {
     maxLoss: number;
     volatility: number;
   } {
-    if (data.length === 0) {
-      throw new Error('No data to analyze');
+    if (!data || data.length < 2) {
+      throw new Error('Insufficient data to analyze. Need at least 2 data points.');
     }
 
     const volumes = data.map(d => d.volume);
-    const changes = data.slice(1).map((d, i) => d.close - data[i].close);
-    const changePercents = data.slice(1).map((d, i) => (d.close - data[i].close) / data[i].close);
+    const changes: number[] = [];
+    const changePercents: number[] = [];
+    
+    // Calculate changes and percentages
+    for (let i = 1; i < data.length; i++) {
+      const prevData = data[i - 1];
+      const currentData = data[i];
+      
+      if (!prevData || !currentData) continue;
+      
+      const prevClose = prevData.close;
+      const currentClose = currentData.close;
+      
+      if (typeof prevClose === 'number' && typeof currentClose === 'number') {
+        const change = currentClose - prevClose;
+        changes.push(change);
+        changePercents.push(change / prevClose);
+      }
+    }
 
     const avgVolume = volumes.reduce((sum, vol) => sum + vol, 0) / volumes.length;
     const avgChange = changes.reduce((sum, change) => sum + change, 0) / changes.length;

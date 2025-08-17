@@ -85,7 +85,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <span className="text-sm font-semibold text-gray-900">$125,430.50</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Today's Change</span>
+              <span className="text-sm text-gray-600">Today&apos;s Change</span>
               <span className="text-sm font-semibold text-green-600">+$2,340.25</span>
             </div>
             <div className="flex justify-between items-center">

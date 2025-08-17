@@ -2,7 +2,7 @@
 // This file demonstrates how to use the mock data generator with different scenarios
 
 import { MockDataGenerator, FinancialDataValidator } from './mock-data-generator';
-import { INDIAN_COMPANIES, getCompanyBySymbol } from './indian-companies';
+import { getCompanyBySymbol } from './indian-companies';
 import { getScenario, getScenarioNames, createCustomScenario } from './market-scenarios';
 import { OHLCVData, MockDataOptions } from '@/types/stock';
 
