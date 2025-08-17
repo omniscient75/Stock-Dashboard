@@ -1,0 +1,5 @@
+{
+  "/api/stocks/[symbol]/historical/route": "app/api/stocks/[symbol]/historical/route.js",
+  "/enhanced-dashboard/page": "app/enhanced-dashboard/page.js",
+  "/page": "app/page.js"
+}

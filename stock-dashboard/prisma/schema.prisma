@@ -1,0 +1,196 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Database connection - PostgreSQL for production, SQLite for development
+generator client {
+  provider = "prisma-client-js"
+}
+
+// PostgreSQL for production (recommended for financial data)
+// SQLite for development (easier setup)
+datasource db {
+  provider = "postgresql" // Change to "sqlite" for development
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// CORE STOCK DATA MODELS
+// ========================================
+
+/// Companies table - Stores company information
+/// This is the main entity that stocks belong to
+model Company {
+  id          String   @id @default(cuid()) // Unique identifier
+  symbol      String   @unique // Stock symbol (e.g., "AAPL")
+  name        String   // Full company name
+  sector      String?  // Industry sector (optional)
+  industry    String?  // Specific industry (optional)
+  marketCap   BigInt?  // Market capitalization (BigInt for large numbers)
+  employees   Int?     // Number of employees
+  website     String?  // Company website
+  description String?  // Company description
+  isActive    Boolean  @default(true) // Whether the stock is actively traded
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  stockPrices StockPrice[] // One company has many stock prices
+  watchlists  WatchlistItem[] // Many users can watch this stock
+  portfolios  PortfolioPosition[] // Many users can own this stock
+
+  // Indexes for performance
+  @@index([symbol]) // Fast lookups by symbol
+  @@index([sector]) // Fast sector-based queries
+  @@index([isActive]) // Filter active stocks quickly
+
+  @@map("companies") // Explicit table name
+}
+
+/// Stock prices table - Stores historical OHLCV data
+/// This is the most frequently queried table
+model StockPrice {
+  id        String   @id @default(cuid())
+  companyId String   // Foreign key to Company
+  date      DateTime // Date of the price data
+  open      Decimal  @db.Decimal(10, 4) // Opening price
+  high      Decimal  @db.Decimal(10, 4) // Highest price of the day
+  low       Decimal  @db.Decimal(10, 4) // Lowest price of the day
+  close     Decimal  @db.Decimal(10, 4) // Closing price
+  volume    BigInt   // Trading volume (BigInt for large numbers)
+  adjustedClose Decimal? @db.Decimal(10, 4) // Adjusted for splits/dividends
+  createdAt DateTime @default(now())
+
+  // Relationships
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Composite unique constraint - one price record per company per date
+  @@unique([companyId, date])
+  
+  // Critical indexes for time-series queries
+  @@index([companyId, date]) // Most important index for stock queries
+  @@index([date]) // For market-wide queries
+  @@index([companyId, date(sort: Desc)]) // For recent data queries
+
+  @@map("stock_prices")
+}
+
+// ========================================
+// USER DATA MODELS
+// ========================================
+
+/// Users table - Stores user account information
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String   // Hashed password
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  watchlists WatchlistItem[]
+  portfolios PortfolioPosition[]
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+/// Watchlist items - Stocks that users want to track
+model WatchlistItem {
+  id        String   @id @default(cuid())
+  userId    String   // Foreign key to User
+  companyId String   // Foreign key to Company
+  targetPrice Decimal? @db.Decimal(10, 4) // Optional target price for alerts
+  notes     String?  // User notes
+  addedAt   DateTime @default(now())
+
+  // Relationships
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Unique constraint - one watchlist item per user per company
+  @@unique([userId, companyId])
+  
+  // Indexes
+  @@index([userId]) // Fast user watchlist queries
+  @@index([companyId]) // Fast company-based queries
+
+  @@map("watchlist_items")
+}
+
+/// Portfolio positions - Stocks that users own
+model PortfolioPosition {
+  id           String   @id @default(cuid())
+  userId       String   // Foreign key to User
+  companyId    String   // Foreign key to Company
+  shares       Decimal  @db.Decimal(15, 6) // Number of shares (supports fractional shares)
+  averagePrice Decimal  @db.Decimal(10, 4) // Average purchase price
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relationships
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Unique constraint - one position per user per company
+  @@unique([userId, companyId])
+  
+  // Indexes
+  @@index([userId]) // Fast portfolio queries
+  @@index([companyId]) // Fast company-based queries
+
+  @@map("portfolio_positions")
+}
+
+/// Transaction history - Buy/sell transactions
+model Transaction {
+  id        String   @id @default(cuid())
+  userId    String   // Foreign key to User
+  companyId String   // Foreign key to Company
+  type      TransactionType // BUY or SELL
+  shares    Decimal  @db.Decimal(15, 6) // Number of shares
+  price     Decimal  @db.Decimal(10, 4) // Price per share
+  total     Decimal  @db.Decimal(15, 4) // Total transaction value
+  fees      Decimal  @db.Decimal(10, 4) @default(0) // Transaction fees
+  date      DateTime // Transaction date
+  notes     String?  // User notes
+  createdAt DateTime @default(now())
+
+  // Relationships
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([userId, date]) // Fast user transaction history
+  @@index([companyId, date]) // Fast company transaction history
+  @@index([date]) // Fast date-based queries
+
+  @@map("transactions")
+}
+
+// ========================================
+// ENUMS
+// ========================================
+
+/// Transaction types
+enum TransactionType {
+  BUY
+  SELL
+}
+
+// ========================================
+// VIEWS (PostgreSQL only)
+// ========================================
+
+/// Market summary view - Aggregated market data
+/// This is a database view for performance
+model MarketSummary {
+  totalCompanies Int
+  totalVolume    BigInt
+  averagePrice   Decimal
+  date           DateTime
+
+  @@map("market_summary")
+  @@schema("public")
+}

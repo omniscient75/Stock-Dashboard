@@ -1,0 +1,364 @@
+{
+  "info": {
+    "name": "Stock Dashboard API",
+    "description": "Complete API testing collection for the stock dashboard application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "symbol",
+      "value": "RELIANCE",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Companies API",
+      "item": [
+        {
+          "name": "Get All Companies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/companies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "companies"]
+            }
+          }
+        },
+        {
+          "name": "Get Companies with Pagination",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/companies?page=1&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "companies"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Companies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/companies?search=RELIANCE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "companies"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "RELIANCE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Sector",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/companies?sector=Technology",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "companies"],
+              "query": [
+                {
+                  "key": "sector",
+                  "value": "Technology"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Sort by Market Cap",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/companies?sortBy=marketCap&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "companies"],
+              "query": [
+                {
+                  "key": "sortBy",
+                  "value": "marketCap"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Company",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"TEST\",\n  \"name\": \"Test Company Ltd\",\n  \"sector\": \"Technology\",\n  \"industry\": \"Software\",\n  \"exchange\": \"NSE\",\n  \"marketCap\": 100000,\n  \"peRatio\": 20.5,\n  \"dividendYield\": 1.2,\n  \"basePrice\": 100,\n  \"volatility\": 0.02,\n  \"avgVolume\": 1000000,\n  \"description\": \"A test company for API testing\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/companies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "companies"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stocks API",
+      "item": [
+        {
+          "name": "Get Stock Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/{{symbol}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stocks", "{{symbol}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Stock Data with Date Range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/{{symbol}}?startDate=2024-01-01T00:00:00.000Z&endDate=2024-01-15T23:59:59.999Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stocks", "{{symbol}}"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-15T23:59:59.999Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Stock Data with Pagination",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/{{symbol}}?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stocks", "{{symbol}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Sort by Volume",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/{{symbol}}?sortBy=volume&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stocks", "{{symbol}}"],
+              "query": [
+                {
+                  "key": "sortBy",
+                  "value": "volume"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Stock Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"{{symbol}}\",\n  \"date\": \"2024-01-16T00:00:00.000Z\",\n  \"open\": 2510.00,\n  \"high\": 2530.50,\n  \"low\": 2500.25,\n  \"close\": 2525.75,\n  \"volume\": 5200000,\n  \"change\": 15.75,\n  \"changePercent\": 0.63\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/{{symbol}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stocks", "{{symbol}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Stock Data",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"close\": 2530.00,\n  \"volume\": 5500000,\n  \"change\": 20.00,\n  \"changePercent\": 0.80\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/{{symbol}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stocks", "{{symbol}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Stock Data",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/{{symbol}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stocks", "{{symbol}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Latest Price API",
+      "item": [
+        {
+          "name": "Get Latest Price",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/{{symbol}}/latest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stocks", "{{symbol}}", "latest"]
+            }
+          }
+        },
+        {
+          "name": "Update Latest Price",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 2530.00,\n  \"volume\": 5500000,\n  \"high\": 2540.00,\n  \"low\": 2510.00,\n  \"open\": 2520.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/{{symbol}}/latest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stocks", "{{symbol}}", "latest"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Testing",
+      "item": [
+        {
+          "name": "Invalid Symbol (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stocks/INVALID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stocks", "INVALID"]
+            }
+          }
+        },
+        {
+          "name": "Invalid Method (405)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/companies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "companies"]
+            }
+          }
+        },
+        {
+          "name": "Invalid Request Body (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"invalid\",\n  \"name\": \"\",\n  \"sector\": \"Invalid Sector\",\n  \"exchange\": \"INVALID\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/companies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "companies"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
